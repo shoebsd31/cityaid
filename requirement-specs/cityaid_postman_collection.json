@@ -1,0 +1,377 @@
+{
+  "info": {
+    "name": "CityAid API - MCP Access & Approvals",
+    "_postman_id": "3e5f3f5e-6a1e-4a4a-9a5a-20250831083905",
+    "description": "Postman v2.1 collection for CityAid API (OAuth2/JWT).",
+    "schema": "https://schema.getpostman.com/collection/json/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "List Cases",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/cases?city=PUN&team=AL&state=Pending_Finance&page=1&pageSize=50",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "cases?city=PUN&team=AL&state=Pending_Finance&page=1&pageSize=50"
+          ]
+        },
+        "description": "List cases visible to caller (RBAC/RLS enforced)."
+      }
+    },
+    {
+      "name": "Create Case",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/cases",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "cases"
+          ]
+        },
+        "description": "Create a new case.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"city\": \"PUN\",\n  \"team\": \"AL\",\n  \"title\": \"Medical equipment grant\",\n  \"description\": \"Beds & consumables\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Get Case",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/cases/{{caseId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "cases",
+            "{{caseId}}"
+          ]
+        },
+        "description": "Get case by ID."
+      }
+    },
+    {
+      "name": "Update Case (metadata)",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/cases/{{caseId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "cases",
+            "{{caseId}}"
+          ]
+        },
+        "description": "Update case metadata.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Medical equipment grant - Phase 1\"\n}"
+        }
+      }
+    },
+    {
+      "name": "Attach File metadata",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/cases/{{caseId}}/files",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "cases",
+            "{{caseId}}",
+            "files"
+          ]
+        },
+        "description": "Attach a file reference (SharePoint) to a case.",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"blooddrive_poster.pdf\",\n  \"sharePointUrl\": \"https://contoso.sharepoint.com/sites/Pune-Alpha/Analysis/blooddrive_poster.pdf\",\n  \"sensitivity\": \"Low\"\n}"
+        }
+      }
+    },
+    {
+      "name": "List Files for Case",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/cases/{{caseId}}/files",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "cases",
+            "{{caseId}}",
+            "files"
+          ]
+        },
+        "description": "List files for a case."
+      }
+    },
+    {
+      "name": "Submit to Finance",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/cases/{{caseId}}/submit",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "cases",
+            "{{caseId}}",
+            "submit"
+          ]
+        },
+        "description": "Move to Pending_Finance."
+      }
+    },
+    {
+      "name": "Finance Approve",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/cases/{{caseId}}/approve",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "cases",
+            "{{caseId}}",
+            "approve"
+          ]
+        },
+        "description": "Finance approve (requires approval:finance)."
+      }
+    },
+    {
+      "name": "Finance Reject",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/cases/{{caseId}}/reject",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "cases",
+            "{{caseId}}",
+            "reject"
+          ]
+        },
+        "description": "Finance reject (requires approval:finance)."
+      }
+    },
+    {
+      "name": "PMO Approve",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/cases/{{caseId}}/approve",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "cases",
+            "{{caseId}}",
+            "approve"
+          ]
+        },
+        "description": "PMO approve (requires approval:pmo)."
+      }
+    },
+    {
+      "name": "PMO Reject",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/cases/{{caseId}}/reject",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "cases",
+            "{{caseId}}",
+            "reject"
+          ]
+        },
+        "description": "PMO reject (requires approval:pmo)."
+      }
+    },
+    {
+      "name": "PMO Re-trigger",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/cases/{{caseId}}/retrigger",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "cases",
+            "{{caseId}}",
+            "retrigger"
+          ]
+        },
+        "description": "PMO re-trigger after rejection."
+      }
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://api.cityaid.example.com"
+    },
+    {
+      "key": "access_token",
+      "value": "{{ACCESS_TOKEN}}",
+      "type": "string"
+    },
+    {
+      "key": "caseId",
+      "value": "CS-2025-PUN-AL-001"
+    }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{access_token}}",
+        "type": "string"
+      }
+    ]
+  }
+}

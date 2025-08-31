@@ -1,0 +1,27 @@
+sequenceDiagram
+  participant U as Alpha User
+  participant API as CityAid API
+  participant SQL as Azure SQL
+  participant SP as SharePoint (Alpha)
+  participant FIN as Finance User
+  participant PMO as PMO User
+
+  U->>API: Create Case (Initiated)
+  API->>SQL: Insert Case (CS-YYYY-PUN-AL-###)
+  U->>API: Upload/Link Files
+  API->>SP: Store files + metadata
+  U->>API: Submit to Finance
+  API->>SQL: Update state = Pending_Finance
+
+  FIN->>API: Approve or Reject
+  API->>SQL: Update state
+
+  alt Approved by Finance
+    API->>PMO: Notify for final approval
+    PMO->>API: Approve
+    API->>SQL: Update state = Approved
+  else Rejected at any stage
+    API->>PMO: Notify rejection
+    PMO->>API: Re-trigger flow
+    API->>SQL: Update state = Pending_Finance
+  end

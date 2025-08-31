@@ -1,0 +1,109 @@
+The product idea : Create an MCP based solution to get information from MCP servers based on the logged in user. Each MCP is configured to work with different sources like API, SharePoint files. Importantly the idea is to demonstrate secure and authorized access of resources by different teams based on the city and team. 
+
+
+
+Here's the business scenario
+
+CityAid is an NGO which runs in India for multiple cities.
+It focuses on healthcare and education. The team is divided in 2 different parts Alpha (healthcare) and Beta(education)
+On the highlevel there's PMO which can manage both Alpha and Beta teams. For each team there's a single Finance team.
+There's a team on the country level which has access to all the resources within different cities in India
+
+The teams are setup in different cities. For example
+For Pune city :
+Team Alpha for healthcare
+Team Beta for education
+Team PMO for both
+Team Analysis for approvals
+Team Finance for the city
+
+For Allahabad city :
+Team Alpha for healthcare
+Team Beta for education
+Team PMO for both
+Team Analysis for approvals
+Team Finance for the city
+
+For India : 
+Country Team Alpha for healthcare with access to all the cities in India
+Country Team Beta for education with access to all the cities in India
+Country Team PMO for PMO, finance and Analysis access to all the cities in India
+Country Finance team with finance access to all the cities in India
+
+
+For health care, it performs activities like:
+1) Help provide all the medical equipments and medicines needed for basic clinic
+2) Blood donation drive
+3) organize sport events for charity
+4) provide laser treatment equipments in remote areas
+5) Vaccination drives
+6) Therapies for autistic children
+
+
+For education, it performs activities like:
+1) Helps with the admission in autistic schools
+2) books for blind schools
+3) awareness drive for further education options
+4) Consulting children who have failed in their studies
+
+
+
+For each activity a case is registered in the system
+- The case is researched and analyzed and goes through an approval system. It is finally approved by the PMO
+- The case has 2 level of approvals, one from the Analysis team and other from finance team
+- Each case has a caseID, start date, end date and a budget, work notes
+- CaseID is of the format "CS-<currentYear>-<city short code>-<AL (for Alpha)/BE (for Beta)>-<case number>". For example for Alpha it can be CS-PUN-2025-AL-001, for Beta it can be CS-2025-BE-001
+- Each case can have multiple files associated with it. The metadata of the file contains information about which case it belongs to
+- The finance team evaluates the budget based on the donation they receive
+- The donations are divided to Healthcare and Education departments
+
+The files for each of these are stored on sharepoint. The sharepoint structure is as follows :
+- SharePoint Site : Alpha
+  - Document Library : Alpha Analysis
+
+- SharePoint Site : Beta
+  - Document Library : Beta Analysis
+
+- SharePoint Finance
+  - Document Library : Alpha
+  - Document Library : Beta
+
+Finance team can access the document libraries of both Alpha and Beta
+Alpha analysis team can only see the documents on sharepoint site : Alpha
+Beta analysis team can only see the documents on sharepoint site : Beta
+PMO team can access everything.
+
+The case related data is stored in Azure SQL
+
+The Alpha and the Beta team can approve the documents through an API. So that it moves to the next level
+The Approval states are as follows : Initiated, Pending, Approved, Rejected
+
+For ever case in Alpha the approval flow is as follows
+A person from Alpha team can register and start a case
+A person from Alpha team will approve the flow => it goes to the Finance team => on approval from the Finance team => goes to someone in the PMO for approval
+A rejection from anyone goes to the PMO
+PMO can retrigger the approval flow.
+Alpha team do not have the permissions to see the cases assigned to Beta team
+
+For ever case in Beta the approval flow is as follows
+A person from Beta team can register and start a case
+A person from Beta team will approve the flow => it goes to the Finance team => on approval from the Finance team => goes to someone in the PMO for approval
+A rejection from anyone goes to the PMO
+PMO can retrigger the approval flow.
+Beta team do not have the permissions to see the cases assigned to Alpha team
+
+The approval flow should be handled through a REST API. The REST API must be stick to open-api 3 specifications
+The API also allows teams to see the cases along with their files.
+
+Alpha team can only see their cases and their files in sharepoint. The can't see the cases assigned to Beta team or created by Beta team. They can't see the files in sharepoint which are on Beta site.
+
+On the tech stack :
+- Use Azure SQL to store the metadata
+- Use SharePoint to retrieve the files with it's metadata
+- Use dotnet web api for the REST API with open-api 3 specifications. 
+
+I need your help to first validate this architecture, let me know if there's something missing. I want you to create an architecture diagram in .mmd format which can be rendered on vs code mermaid plugin. 
+
+I would then want you to come up with some fake users and cases and fill up the SQL table with some sample entries. I would need your help to come up with some sample files and fill them up. 
+
+I need your help to setup user permissions based on their respective roles. The REST API must respect the permissions of every user. But let's do this step by step.

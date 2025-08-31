@@ -1,0 +1,13 @@
+stateDiagram-v2
+  [*] --> Initiated
+  Initiated --> Pending_Analysis : Alpha/Beta self-check
+  Pending_Analysis --> Pending_Finance : Send to Finance
+  Pending_Finance --> Pending_PMO : Finance Approved
+  Pending_PMO --> Approved : PMO Approved
+
+  Pending_Analysis --> Rejected : Rejected by Alpha/Beta
+  Pending_Finance --> Rejected : Rejected by Finance
+  Pending_PMO --> Rejected : Rejected by PMO
+
+  Rejected --> Pending_Finance : PMO Re-trigger
+  Approved --> [*]

@@ -1,0 +1,318 @@
+openapi: 3.0.3
+info:
+  title: CityAid API
+  version: 1.0.0
+  description: >
+    API for CityAid MCP Access & Approvals. RBAC enforced via OAuth2 (Entra ID),
+    Azure SQL Row-Level Security (RLS), and SharePoint library scoping.
+servers:
+  - url: https://api.cityaid.example.com
+tags:
+  - name: Cases
+  - name: Files
+  - name: Approvals
+paths:
+  /cases:
+    get:
+      summary: List cases (scoped by RBAC/RLS)
+      tags: [Cases]
+      security:
+        - oauth2_auth:
+            - case:read
+      parameters:
+        - in: query
+          name: city
+          schema: { type: string }
+        - in: query
+          name: team
+          schema: { type: string, enum: [AL, BE, PMO, FIN, AN] }
+        - in: query
+          name: state
+          schema: { type: string, enum: [Initiated, Pending_Analysis, Pending_Finance, Pending_PMO, Approved, Rejected] }
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, default: 1 }
+        - in: query
+          name: pageSize
+          schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+      responses:
+        "200":
+          description: Paged list of cases visible to caller
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: "#/components/schemas/Case" }
+                  total: { type: integer }
+                  page: { type: integer }
+                  pageSize: { type: integer }
+        default:
+          $ref: "#/components/responses/Problem"
+    post:
+      summary: Create a new case
+      tags: [Cases]
+      security:
+        - oauth2_auth:
+            - case:create
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CaseCreate"
+      responses:
+        "201":
+          description: Created
+          headers:
+            Location:
+              schema: { type: string }
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Case"
+        default:
+          $ref: "#/components/responses/Problem"
+  /cases/{id}:
+    get:
+      summary: Get case by ID
+      tags: [Cases]
+      security:
+        - oauth2_auth:
+            - case:read
+      parameters:
+        - $ref: "#/components/parameters/CaseId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Case" }
+        default:
+          $ref: "#/components/responses/Problem"
+    patch:
+      summary: Update case (metadata-only)
+      tags: [Cases]
+      security:
+        - oauth2_auth:
+            - case:update
+      parameters:
+        - $ref: "#/components/parameters/CaseId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CaseUpdate"
+      responses:
+        "200":
+          description: Updated
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Case" }
+        default:
+          $ref: "#/components/responses/Problem"
+  /cases/{id}/files:
+    post:
+      summary: Attach a file (metadata link to SharePoint item)
+      tags: [Files]
+      security:
+        - oauth2_auth:
+            - file:manage
+      parameters:
+        - $ref: "#/components/parameters/CaseId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/FileAttach"
+      responses:
+        "201":
+          description: Attached
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/File" }
+        default:
+          $ref: "#/components/responses/Problem"
+    get:
+      summary: List files for case (scoped)
+      tags: [Files]
+      security:
+        - oauth2_auth:
+            - case:read
+      parameters:
+        - $ref: "#/components/parameters/CaseId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/File" }
+        default:
+          $ref: "#/components/responses/Problem"
+  /cases/{id}/submit:
+    post:
+      summary: Move case to Pending_Finance
+      tags: [Approvals]
+      security:
+        - oauth2_auth:
+            - case:submit
+      parameters:
+        - $ref: "#/components/parameters/CaseId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Case" }
+        default:
+          $ref: "#/components/responses/Problem"
+  /cases/{id}/approve:
+    post:
+      summary: Approve case for the caller's role (Finance or PMO)
+      tags: [Approvals]
+      security:
+        - oauth2_auth:
+            - approval:finance
+            - approval:pmo
+      parameters:
+        - $ref: "#/components/parameters/CaseId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Case" }
+        default:
+          $ref: "#/components/responses/Problem"
+  /cases/{id}/reject:
+    post:
+      summary: Reject case for the caller's role
+      tags: [Approvals]
+      security:
+        - oauth2_auth:
+            - approval:finance
+            - approval:pmo
+      parameters:
+        - $ref: "#/components/parameters/CaseId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Case" }
+        default:
+          $ref: "#/components/responses/Problem"
+  /cases/{id}/retrigger:
+    post:
+      summary: PMO re-trigger after rejection (send back to Pending_Finance or appropriate)
+      tags: [Approvals]
+      security:
+        - oauth2_auth:
+            - approval:pmo
+      parameters:
+        - $ref: "#/components/parameters/CaseId"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Case" }
+        default:
+          $ref: "#/components/responses/Problem"
+components:
+  securitySchemes:
+    oauth2_auth:
+      type: oauth2
+      description: Microsoft Entra ID OAuth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://login.microsoftonline.com/{tenant}/oauth2/v2.0/authorize
+          tokenUrl: https://login.microsoftonline.com/{tenant}/oauth2/v2.0/token
+          scopes:
+            case:create: Create cases
+            case:read: Read cases
+            case:update: Update cases metadata
+            case:submit: Submit cases to Finance
+            file:manage: Attach/list files
+            approval:finance: Approve/reject as Finance
+            approval:pmo: Approve/reject or re-trigger as PMO
+        clientCredentials:
+          tokenUrl: https://login.microsoftonline.com/{tenant}/oauth2/v2.0/token
+          scopes:
+            case:read: Read cases
+            file:manage: Attach/list files
+  parameters:
+    CaseId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string }
+  responses:
+    Problem:
+      description: Error response (RFC 7807)
+      content:
+        application/problem+json:
+          schema:
+            $ref: "#/components/schemas/ProblemDetails"
+  schemas:
+    Case:
+      type: object
+      required: [id, city, team, state, title, createdAt]
+      properties:
+        id: { type: string, example: "CS-2025-PUN-AL-001" }
+        city: { type: string, example: "PUN" }
+        team: { type: string, enum: [AL, BE, FIN, PMO, AN] }
+        state: { type: string, enum: [Initiated, Pending_Analysis, Pending_Finance, Pending_PMO, Approved, Rejected] }
+        title: { type: string }
+        description: { type: string }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+        createdBy: { type: string }
+    CaseCreate:
+      type: object
+      required: [city, team, title]
+      properties:
+        city: { type: string }
+        team: { type: string, enum: [AL, BE] }
+        title: { type: string }
+        description: { type: string }
+    CaseUpdate:
+      type: object
+      properties:
+        title: { type: string }
+        description: { type: string }
+    File:
+      type: object
+      required: [id, caseId, name, sharePointUrl]
+      properties:
+        id: { type: string }
+        caseId: { type: string }
+        name: { type: string }
+        sharePointUrl: { type: string, format: uri }
+        city: { type: string }
+        team: { type: string }
+        sensitivity: { type: string, enum: [Low, Medium, High] }
+    FileAttach:
+      type: object
+      required: [name, sharePointUrl]
+      properties:
+        name: { type: string }
+        sharePointUrl: { type: string, format: uri }
+        sensitivity: { type: string, enum: [Low, Medium, High] }
+    ProblemDetails:
+      type: object
+      description: RFC 7807 Problem Details
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string, format: uri }
+security:
+  - oauth2_auth: []

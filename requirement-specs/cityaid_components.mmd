@@ -1,0 +1,51 @@
+flowchart TD
+
+  %% Clients
+  subgraph C[Clients]
+    C1["User (Alpha/Beta/Finance/PMO/Analysis)"]
+    C2["MCP Client"]
+  end
+
+  %% Identity & Secrets
+  subgraph I["Identity & Secrets"]
+    I1["Microsoft Entra ID"]
+    I2["Azure Key Vault"]
+  end
+
+  %% API Layer
+  subgraph A["API Layer"]
+    A1["ASP.NET Core Web API"]
+    A2["Swagger / OpenAPI 3"]
+  end
+
+  %% Data & Content
+  subgraph D["Data & Content"]
+    D1["Azure SQL (Cases, Approvals, Users)"]
+    D2["SharePoint: Alpha / Library: Analysis"]
+    D3["SharePoint: Beta / Library: Analysis"]
+  end
+
+  %% MCP Servers
+  subgraph M["MCP Servers"]
+    M1["MCP: SharePoint Tools"]
+    M2["MCP: SQL Tools"]
+    M3["MCP: CityAid API Tools"]
+  end
+
+  %% Edges
+  C1 -->|"OAuth2 Auth Code"| I1
+  C1 -->|"HTTPS/JSON"| A1
+  C2 -->|"User identity context"| I1
+  C2 -->|"MCP protocol"| M1
+  C2 -->|"MCP protocol"| M2
+  C2 -->|"MCP protocol"| M3
+
+  A1 -->|"Managed Identity / SQL auth"| D1
+  A1 -->|"Graph API / SP REST"| D2
+  A1 -->|"Graph API / SP REST"| D3
+  A1 -.->|"Fetch secrets"| I2
+
+  I1 -->|"Tokens & claims (city, team, role)"| A1
+  A1 -->|"RBAC row filters"| D1
+  A1 -->|"Library-scoped access"| D2
+  A1 -->|"Library-scoped access"| D3
