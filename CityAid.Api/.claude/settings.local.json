@@ -1,7 +1,17 @@
 {
   "permissions": {
     "allow": [
-      "Bash(dotnet build)"
+      "Bash(dotnet build)",
+      "Read(E:\\GitRepos\\cityaid/**)",
+      "Bash(dotnet sln add:*)",
+      "Bash(dotnet build:*)",
+      "Bash(dotnet test:*)",
+      "Read(E:\\GitRepos\\cityaid/**)",
+      "Bash(dotnet sln remove:*)",
+      "Bash(dotnet new:*)",
+      "Bash(dotnet add:*)",
+      "Bash(dotnet clean:*)",
+      "Bash(python:*)"
     ],
     "deny": [],
     "ask": []

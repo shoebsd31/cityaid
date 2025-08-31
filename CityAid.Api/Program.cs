@@ -99,3 +99,6 @@ app.MapPost("/cases", () => Results.Created("/cases/CS-2025-PUN-AL-001", new { i
    .RequireAuthorization("CaseCreate");
 
 app.Run();
+
+// Make Program class accessible for testing
+public partial class Program { }

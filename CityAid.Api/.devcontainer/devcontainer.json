@@ -1,0 +1,41 @@
+{
+  "name": "CityAid .NET 8 API",
+  "image": "mcr.microsoft.com/devcontainers/dotnet:0-8.0",
+  "features": {
+    "ghcr.io/devcontainers/features/azure-cli:1": {},
+    "ghcr.io/devcontainers/features/powershell:1": {},
+    "ghcr.io/devcontainers/features/git:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-dotnettools.csdevkit",
+        "ms-dotnettools.csharp",
+        "ms-azuretools.vscode-azureresourcegroups",
+        "ms-vscode.vscode-node-azure-pack",
+        "humao.rest-client",
+        "csstools.postcss"
+      ]
+    }
+  },
+  "remoteUser": "vscode",
+  "workspaceFolder": "/workspaces/cityaid",
+  "workspaceMount": "source=${localWorkspaceFolder}/..,target=/workspaces/cityaid,type=bind",
+  "postCreateCommand": "dotnet --info && dotnet dev-certs https --trust || true && cd /workspaces/cityaid && dotnet restore cityaid.sln",
+  "postStartCommand": "cd /workspaces/cityaid",
+  "portsAttributes": {
+    "5000": {
+      "label": "CityAid API (HTTP)",
+      "onAutoForward": "notify"
+    },
+    "5001": {
+      "label": "CityAid API (HTTPS)",
+      "onAutoForward": "notify"
+    }
+  },
+  "forwardPorts": [
+    5000,
+    5001
+  ]
+}
