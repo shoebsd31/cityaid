@@ -11,7 +11,9 @@
       "Bash(dotnet new:*)",
       "Bash(dotnet add:*)",
       "Bash(dotnet clean:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Read(E:\\GitRepos\\cityaid\\requirement-specs/**)",
+      "Read(E:\\GitRepos\\cityaid\\requirement-specs/**)"
     ],
     "deny": [],
     "ask": []
