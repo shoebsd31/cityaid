@@ -346,6 +346,121 @@ FodyWeavers.xsd
 # Local History for Visual Studio Code
 .history/
 
+# .NET 9 specific
+*.swp
+*.*~
+project.lock.json
+.DS_Store
+*.pyc
+nupkg/
+
+# EF Core Migrations (uncomment if you want to ignore migrations)
+# **/Migrations/
+
+# Database files
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Local development settings - Keep Development settings but exclude others with secrets
+appsettings.Local.json
+appsettings.Staging.json
+appsettings.*.local.json
+!appsettings.json
+!appsettings.Development.json
+!appsettings.Production.json
+
+# Secrets and keys
+secrets.json
+*.key
+*.pem
+*.p12
+*.pfx
+
+# JetBrains IDEs
+.idea/
+*.sln.iml
+
+# Rider
+.idea/
+.idea/**
+*.sln.DotSettings.user
+
+# Visual Studio Code
+.vscode/
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# Temporary ASP.NET files
+App_Data/
+
+# Application specific
+**/logs/
+**/temp/
+publish/
+PublishProfiles/
+
+# Docker
+Dockerfile.dcproj.user
+docker-compose.override.yml
+
+# Certificate files
+*.crt
+*.cer
+
+# Health checks database
+healthchecksdb
+
+# Entity Framework
+*.edmx.diagram
+
+# CityAid specific
+**/wwwroot/uploads/
+**/wwwroot/files/
+
+# Development tools output
+tools/**/bin/
+tools/**/obj/
+
+# Test results and coverage
+TestResults/
+**/*.trx
+**/*.coverage
+coverage/
+codecoverage/
+
+# IDE specific settings
+**/.vs/
+**/.vscode/
+!**/.vscode/settings.json
+!**/.vscode/tasks.json
+!**/.vscode/launch.json
+
+# User secrets
+**/secrets.json
+**/.env
+**/.env.local
+
+# Published output
+**/publish/
+**/PublishProfiles/
+
+# Azure deployment
+azure-pipelines.yml.user
+
+# Claude Code specific
+.claude/
+**/.claude/settings.local.json
+
+# Documentation and reference files (temporary)
+.gitignore-summary.md
+*.md.bak
+*.md.tmp
+
 # Windows Installer files from build outputs
 *.cab
 *.msi
