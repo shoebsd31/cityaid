@@ -422,6 +422,9 @@ healthchecksdb
 **/wwwroot/uploads/
 **/wwwroot/files/
 
+# ApiTestRunner credentials
+**/appsers.json
+
 # Development tools output
 tools/**/bin/
 tools/**/obj/

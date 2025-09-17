@@ -34,6 +34,7 @@ public static class CaseEndpoints
                 ? Results.Ok(result.Value)
                 : Results.BadRequest(new { errors = result.Errors });
         })
+        .RequireAuthorization("CitizenPolicy")
         .WithName("GetCases")
         .WithSummary("List cases (scoped by RBAC/RLS)")
         .WithOpenApi();
@@ -59,6 +60,7 @@ public static class CaseEndpoints
                 ? Results.Created($"/cases/{result.Value!.Id}", result.Value)
                 : Results.BadRequest(new { errors = result.Errors });
         })
+        .RequireAuthorization("CitizenPolicy")
         .WithName("CreateCase")
         .WithSummary("Create a new case")
         .WithOpenApi();
@@ -75,6 +77,7 @@ public static class CaseEndpoints
                 ? Results.Ok(result.Value)
                 : Results.NotFound(new { errors = result.Errors });
         })
+        .RequireAuthorization("CitizenPolicy")
         .WithName("GetCase")
         .WithSummary("Get case by ID")
         .WithOpenApi();
@@ -100,6 +103,7 @@ public static class CaseEndpoints
                 ? Results.Ok(result.Value)
                 : Results.BadRequest(new { errors = result.Errors });
         })
+        .RequireAuthorization("CaseManagerPolicy")
         .WithName("UpdateCase")
         .WithSummary("Update case (metadata-only)")
         .WithOpenApi();
@@ -116,6 +120,7 @@ public static class CaseEndpoints
                 ? Results.Ok(result.Value)
                 : Results.BadRequest(new { errors = result.Errors });
         })
+        .RequireAuthorization("CaseManagerPolicy")
         .WithName("SubmitCase")
         .WithSummary("Move case to Pending_Finance")
         .WithOpenApi();
@@ -132,6 +137,7 @@ public static class CaseEndpoints
                 ? Results.Ok(result.Value)
                 : Results.BadRequest(new { errors = result.Errors });
         })
+        .RequireAuthorization("AdminPolicy")
         .WithName("ApproveCase")
         .WithSummary("Approve case for the caller's role (Finance or PMO)")
         .WithOpenApi();
@@ -151,6 +157,7 @@ public static class CaseEndpoints
                 ? Results.Ok(result.Value)
                 : Results.BadRequest(new { errors = result.Errors });
         })
+        .RequireAuthorization("AdminPolicy")
         .WithName("RejectCase")
         .WithSummary("Reject case for the caller's role")
         .WithOpenApi();

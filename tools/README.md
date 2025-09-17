@@ -1,55 +1,55 @@
 # CityAid API Testing Tools
 
-This directory contains tools for testing the CityAid API with various user scenarios and RBAC combinations.
+This directory contains tools for testing the CityAid API with Azure Entra ID authentication and role-based access control (RBAC) validation.
 
 ## 📁 Directory Structure
 
 ```
 tools/
-├── JwtTokenGenerator/          # JWT token generation for testing
-├── ApiTestRunner/              # Automated API test execution tool
-├── api-test-requests.json      # Test request definitions
-├── generate-curl-commands.ps1  # PowerShell script to generate cURL commands
-├── generate-curl-commands.sh   # Bash script to generate cURL commands
+├── ApiTestRunner/              # Automated API test execution tool with Azure AD authentication
+├── generate-curl-commands.ps1  # PowerShell script to generate cURL commands (deprecated)
+├── generate-curl-commands.sh   # Bash script to generate cURL commands (deprecated)
 └── README.md                   # This file
 ```
 
-## 🔐 JWT Token Generator
-
-Generates valid JWT tokens for different user roles and cities.
-
-```bash
-cd JwtTokenGenerator
-dotnet run
-```
-
-**Generated User Types:**
-- **Alpha User (Pune)**: Healthcare team member in Pune
-- **Beta User (Delhi)**: Education team member in Delhi
-- **Finance User (Pune)**: Financial approver for Pune
-- **PMO User (Country)**: Program management with country-wide access
-- **Analysis User (Pune)**: Case analyst for Pune
-
 ## 🧪 API Test Runner (.NET Tool)
 
-Advanced test runner that executes all API requests automatically with dependency management.
+Advanced test runner that executes all API requests automatically with Azure Entra ID authentication and dependency management.
 
 ### Features
-- ✅ Automatic JWT token management
-- ✅ Request dependency resolution (case IDs)
-- ✅ Detailed success/failure reporting
-- ✅ JSON output for CI/CD integration
-- ✅ Configurable delays between requests
+- ✅ **Azure Entra ID Authentication**: Automatic login with username/password
+- ✅ **Role-Based Testing**: Tests Admin, CaseManager, and Citizen roles
+- ✅ **Request Dependency Resolution**: Automatic case ID management
+- ✅ **Authorization Validation**: Verifies proper access control
+- ✅ **Detailed Reporting**: Success/failure with timing and error details
+- ✅ **JSON Output**: CI/CD integration support
+- ✅ **Configurable Delays**: Control request pacing
+
+### Setup
+
+1. **Configure Credentials**: Copy and update the credentials template:
+   ```bash
+   cd ApiTestRunner
+   cp appsers.json.example appsers.json
+   # Edit appsers.json with your Azure AD tenant and user credentials
+   ```
+
+2. **Configure Tests**: Copy and update the test configuration:
+   ```bash
+   cp test-config.example.json my-tests.json
+   # Edit my-tests.json to adjust API URL and test scenarios
+   ```
 
 ### Usage
 
 ```bash
 cd ApiTestRunner
-dotnet run -- --file ../api-test-requests.json
+dotnet run -- --file my-tests.json --credentials appsers.json
 ```
 
 **Options:**
-- `--file`: JSON configuration file (required)
+- `--file`: JSON test configuration file (required)
+- `--credentials`: JSON credentials file with Azure AD config (required)
 - `--delay`: Delay between requests in ms (default: 1000)
 - `--verbose`: Show detailed request/response info
 - `--output`: Save results to JSON file
@@ -57,74 +57,65 @@ dotnet run -- --file ../api-test-requests.json
 **Examples:**
 ```bash
 # Basic usage
-dotnet run -- --file ../api-test-requests.json
+dotnet run -- --file my-tests.json --credentials appsers.json
 
 # Verbose mode with custom delay
-dotnet run -- --file ../api-test-requests.json --delay 500 --verbose
+dotnet run -- --file my-tests.json --credentials appsers.json --delay 500 --verbose
 
 # Save results to file
-dotnet run -- --file ../api-test-requests.json --output results.json
+dotnet run -- --file my-tests.json --credentials appsers.json --output results.json
 ```
 
-## 📋 Test Request Configuration
+## 📋 Test Configuration
 
-The `api-test-requests.json` file contains 20 comprehensive test scenarios:
+The `test-config.example.json` file contains comprehensive test scenarios covering:
 
-### Case Creation Tests (10 scenarios)
-1. **Pune Alpha**: Blood donation drive (healthcare)
-2. **Delhi Beta**: Autism school admissions (education)
-3. **Mumbai Alpha**: Laser treatment equipment (healthcare)
-4. **Kolkata Beta**: Braille books distribution (education)
-5. **Chennai Alpha**: Vaccination drive (healthcare)
-6. **Pune Beta**: Higher education awareness (education)
-7. **Bangalore Alpha**: Sports charity event (healthcare)
-8. **Hyderabad Beta**: Study support for failed students (education)
-9. **Jaipur Alpha**: Autism therapy program (healthcare)
-10. **Ahmedabad Beta**: Digital learning initiative (education)
+### Role-Based Access Testing
+- **Admin Role**: Full system access, case approval/rejection
+- **CaseManager Role**: Case management, submission for approval
+- **Citizen Role**: Case creation, viewing, file attachment
 
-### Workflow Tests (10 scenarios)
-11. **PMO View**: List all cases across country
-12. **Finance View**: List city-specific cases
-13. **Team View**: List team-specific cases
-14. **Submit for Approval**: Alpha user submits case
-15. **Finance Approval**: Finance approves submitted case
-16. **PMO Final Approval**: PMO gives final approval
-17. **File Attachment**: Attach SharePoint file to case
-18. **File Listing**: List files attached to case
-19. **Case Rejection**: Finance rejects a case
-20. **Retrigger Flow**: PMO retriggers rejected case
+### API Endpoint Coverage
+1. **GET /cases**: List cases with role-based filtering
+2. **POST /cases**: Create new cases
+3. **GET /cases/{id}**: Retrieve specific cases
+4. **PATCH /cases/{id}**: Update case metadata (CaseManager+)
+5. **POST /cases/{id}/submit**: Submit for approval (CaseManager+)
+6. **POST /cases/{id}/approve**: Approve cases (Admin only)
+7. **POST /cases/{id}/reject**: Reject cases (Admin only)
+8. **POST /cases/{id}/files**: Attach files to cases
+9. **GET /cases/{id}/files**: List case files
 
-### Cities Covered
-- **PUN** (Pune)
-- **DEL** (Delhi)
-- **MUM** (Mumbai)
-- **KOL** (Kolkata)
-- **CHN** (Chennai)
-- **BLR** (Bangalore)
-- **HYD** (Hyderabad)
-- **JAI** (Jaipur)
-- **AHM** (Ahmedabad)
+### Authorization Boundary Testing
+- Verifies proper 403 Forbidden responses
+- Tests role escalation prevention
+- Validates resource access controls
 
-## 🌐 cURL Command Generation
+## 🔐 Azure AD Configuration
 
-Generate standalone cURL commands for manual testing or CI/CD integration.
+The tool requires proper Azure AD app registration and user setup:
 
-### PowerShell Version
-```powershell
-.\generate-curl-commands.ps1
+### App Registration Requirements
+1. **Public Client**: Enable "Allow public client flows"
+2. **API Permissions**: Grant access to your CityAid API scope
+3. **App Roles**: Define Admin, CaseManager, and Citizen roles
+4. **User Assignment**: Assign test users to appropriate roles
+
+### Credentials Configuration
+```json
+{
+  "tenantId": "your-azure-tenant-id",
+  "clientId": "your-app-registration-client-id",
+  "users": [
+    {
+      "username": "admin@yourcompany.com",
+      "password": "password",
+      "role": "Admin"
+    }
+  ],
+  "scopes": ["api://your-client-id/access_as_user"]
+}
 ```
-
-**Options:**
-- `-ConfigFile`: Input JSON file (default: api-test-requests.json)
-- `-OutputFile`: Output script file (default: curl-commands.sh)
-- `-Windows`: Generate Windows-compatible commands
-
-### Bash Version
-```bash
-./generate-curl-commands.sh
-```
-
-**Output:** `curl-commands.sh` - Executable script with all cURL commands
 
 ## 🚀 Quick Start Guide
 
@@ -133,119 +124,136 @@ Generate standalone cURL commands for manual testing or CI/CD integration.
 cd ../src/CityAid.Api
 dotnet run
 ```
-*API will be available at https://localhost:5151*
+*API will be available at https://localhost:7154*
 
-### 2. Generate Fresh Tokens (Optional)
-```bash
-cd tools/JwtTokenGenerator
-dotnet run
-```
-*Copy tokens to update api-test-requests.json if needed*
+### 2. Configure Azure AD Authentication
+1. Update `appsers.json` with your Azure AD tenant and client IDs
+2. Add test user credentials with appropriate role assignments
+3. Ensure API is configured with matching Azure AD settings
 
 ### 3. Run Automated Tests
 ```bash
 cd tools/ApiTestRunner
-dotnet run -- --file ../api-test-requests.json --verbose
+dotnet run -- --file test-config.example.json --credentials appsers.json --verbose
 ```
 
-### 4. Or Generate cURL Commands
-```bash
-cd tools
-./generate-curl-commands.sh
-./curl-commands.sh
-```
+### 4. Review Results
+- Check console output for test results
+- Use `--output results.json` to save detailed results
+- Investigate any failures with `--verbose` mode
 
 ## 📊 Expected Test Results
 
-When running against a working API:
+When running against a properly configured API:
 
-**✅ Should Pass (18-20 tests):**
-- All case creation requests (201 status)
+**✅ Should Pass:**
+- User authentication for all roles (Admin, CaseManager, Citizen)
+- Case creation requests (201 status)
 - Case listing with proper RBAC filtering (200 status)
 - File operations (200/201 status)
-- Approval workflows (200 status)
+- Role-appropriate approval workflows (200 status)
+- Authorization boundary tests (403 status for denied operations)
 
 **⚠️ May Fail:**
-- Requests requiring specific case states
+- Authentication issues if Azure AD is misconfigured
 - Dependent requests if prerequisites fail
-- Token expiration (24-hour limit)
+- Database connectivity or migration issues
 
 ## 🔧 Troubleshooting
 
 ### Common Issues
 
-**❌ Connection Refused**
-- Ensure CityAid API is running: `dotnet run --project src/CityAid.Api`
-- Check API URL in configuration: `https://localhost:7144`
+**❌ Authentication Failed**
+- Verify Azure AD tenant and client IDs in `appsers.json`
+- Check user credentials and ensure accounts exist
+- Ensure MFA is disabled for test accounts
+- Verify "Allow public client flows" is enabled in app registration
 
 **❌ 401 Unauthorized**
-- Generate fresh JWT tokens: `cd JwtTokenGenerator && dotnet run`
-- Update tokens in `api-test-requests.json`
+- Check API is configured with same Azure AD tenant
+- Verify audience/scope configuration matches
+- Ensure app registration has required API permissions
 
 **❌ 403 Forbidden**
-- Check RBAC rules in test scenarios
-- Verify user has correct permissions for operation
+- Verify users are assigned to correct Azure AD app roles
+- Check RBAC policies in API are properly configured
+- Confirm role claims are included in JWT tokens
 
-**❌ 404 Not Found**
-- Ensure database is migrated: `dotnet ef database update`
-- Check API endpoints match OpenAPI specification
+**❌ Connection Refused**
+- Ensure CityAid API is running: `dotnet run --project src/CityAid.Api`
+- Check API URL in test configuration matches actual API address
 
 **❌ 500 Internal Server Error**
 - Check API logs for detailed error information
 - Verify database connection and schema
-
-### Token Expiration
-JWT tokens expire after 24 hours. If tests fail with 401 errors:
-
-1. Generate new tokens: `cd JwtTokenGenerator && dotnet run`
-2. Update `api-test-requests.json` with fresh tokens
-3. Re-run tests
+- Ensure database migrations are applied
 
 ## 🎯 Test Scenarios Coverage
 
 ### RBAC Testing
-- ✅ City-level isolation (Pune users can't see Delhi cases)
-- ✅ Team-level isolation (Alpha can't see Beta cases)
-- ✅ Role-based permissions (Finance can approve, Alpha cannot)
-- ✅ Country-level access (PMO sees all cities)
+- ✅ **Role-based Access Control**: Admin, CaseManager, and Citizen permissions
+- ✅ **Authorization Boundaries**: Proper 403 responses for unauthorized actions
+- ✅ **Permission Escalation Prevention**: Citizens cannot perform admin actions
+- ✅ **Resource Access Control**: Users can only access appropriate resources
 
 ### Workflow Testing
-- ✅ Case creation and validation
-- ✅ State transitions (Initiated → Approval → Approved)
-- ✅ File attachment and listing
-- ✅ Rejection and retrigger flows
+- ✅ **Case Lifecycle**: Creation → Update → Submit → Approve
+- ✅ **File Management**: Attach and list case files
+- ✅ **State Transitions**: Proper workflow state management
+- ✅ **Dependency Testing**: Tests that require case IDs from previous operations
 
-### Data Scenarios
-- ✅ Multiple cities across India
-- ✅ Healthcare vs Education use cases
-- ✅ Realistic case descriptions and requirements
-- ✅ Proper case ID format (CS-YYYY-CITY-TEAM-###)
+### Authentication Testing
+- ✅ **Azure AD Integration**: Username/password authentication flow
+- ✅ **Token Management**: Automatic token acquisition and usage
+- ✅ **Multi-Role Support**: Tests with different user roles simultaneously
+- ✅ **Error Handling**: Proper response to authentication failures
 
 ## 🔄 Continuous Integration
 
-The tools support CI/CD integration:
+The tools support CI/CD integration with secure credential management:
 
 ### GitHub Actions Example
 ```yaml
+- name: Setup Test Credentials
+  run: |
+    echo '${{ secrets.AZURE_TEST_CREDENTIALS }}' > tools/ApiTestRunner/appsers.json
+
 - name: Run API Tests
   run: |
     cd tools/ApiTestRunner
-    dotnet run -- --file ../api-test-requests.json --output test-results.json
+    dotnet run -- --file test-config.example.json --credentials appsers.json --output test-results.json
+
+- name: Clean Credentials
+  run: rm tools/ApiTestRunner/appsers.json
+  if: always()
 ```
 
 ### JSON Results Format
 ```json
 {
   "Summary": {
-    "Total": 20,
-    "Passed": 18,
-    "Failed": 2,
-    "SuccessRate": 90.0
+    "Total": 12,
+    "Passed": 11,
+    "Failed": 1,
+    "SuccessRate": 91.7
   },
-  "Results": [...]
+  "Results": [
+    {
+      "Name": "Get Cases - Citizen",
+      "Success": true,
+      "StatusCode": 200,
+      "Duration": "00:00:00.245"
+    }
+  ]
 }
 ```
 
+## 📚 Additional Resources
+
+- **API Documentation**: See `AZURE_AUTH_SETUP.md` for detailed Azure AD configuration
+- **ApiTestRunner README**: Full documentation in `tools/ApiTestRunner/README.md`
+- **Security Guide**: Review security considerations for test environment setup
+
 ---
 
-**Built for comprehensive testing of CityAid API authentication, RBAC, and business workflows** 🧪
+**Built for comprehensive testing of CityAid API with Azure Entra ID authentication and RBAC validation** 🔐

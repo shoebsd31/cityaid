@@ -1,0 +1,133 @@
+{
+  "apiBaseUrl": "https://localhost:7154",
+  "requests": [
+    {
+      "name": "Get Cases - Citizen",
+      "description": "List all cases accessible to citizen user",
+      "method": "GET",
+      "endpoint": "/cases",
+      "userRole": "Citizen",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Get Cases - Case Manager",
+      "description": "List all cases accessible to case manager",
+      "method": "GET",
+      "endpoint": "/cases",
+      "userRole": "CaseManager",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Get Cases - Admin",
+      "description": "List all cases accessible to admin",
+      "method": "GET",
+      "endpoint": "/cases",
+      "userRole": "Admin",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Create Case - Citizen",
+      "description": "Create a new case as citizen",
+      "method": "POST",
+      "endpoint": "/cases",
+      "userRole": "Citizen",
+      "payload": {
+        "city": "PUN",
+        "team": "AL",
+        "title": "Test Case from API Runner",
+        "description": "This is a test case created by the API test runner",
+        "budget": 50000,
+        "startDate": "2025-01-01T00:00:00Z",
+        "endDate": "2025-06-30T23:59:59Z",
+        "workNotes": "Initial test case creation"
+      },
+      "expectedStatus": 201
+    },
+    {
+      "name": "Get Created Case",
+      "description": "Retrieve the case that was just created",
+      "method": "GET",
+      "endpoint": "/cases/{caseId}",
+      "userRole": "Citizen",
+      "dependsOn": "Create Case - Citizen",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Update Case - Case Manager",
+      "description": "Update case metadata as case manager",
+      "method": "PATCH",
+      "endpoint": "/cases/{caseId}",
+      "userRole": "CaseManager",
+      "dependsOn": "Create Case - Citizen",
+      "payload": {
+        "title": "Updated Test Case",
+        "description": "This case has been updated by a case manager",
+        "budget": 75000,
+        "workNotes": "Updated by case manager for testing"
+      },
+      "expectedStatus": 200
+    },
+    {
+      "name": "Submit Case - Case Manager",
+      "description": "Submit case for approval",
+      "method": "POST",
+      "endpoint": "/cases/{caseId}/submit",
+      "userRole": "CaseManager",
+      "dependsOn": "Create Case - Citizen",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Approve Case - Admin",
+      "description": "Approve the submitted case",
+      "method": "POST",
+      "endpoint": "/cases/{caseId}/approve",
+      "userRole": "Admin",
+      "dependsOn": "Create Case - Citizen",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Attach File - Citizen",
+      "description": "Attach a file to the case",
+      "method": "POST",
+      "endpoint": "/cases/{caseId}/files",
+      "userRole": "Citizen",
+      "dependsOn": "Create Case - Citizen",
+      "payload": {
+        "name": "Test Document.pdf",
+        "sharePointUrl": "https://contoso.sharepoint.com/sites/cityaid/documents/test.pdf",
+        "sensitivity": "Internal"
+      },
+      "expectedStatus": 201
+    },
+    {
+      "name": "Get Case Files",
+      "description": "List files attached to the case",
+      "method": "GET",
+      "endpoint": "/cases/{caseId}/files",
+      "userRole": "Citizen",
+      "dependsOn": "Create Case - Citizen",
+      "expectedStatus": 200
+    },
+    {
+      "name": "Access Denied - Citizen Approve",
+      "description": "Verify citizen cannot approve cases",
+      "method": "POST",
+      "endpoint": "/cases/{caseId}/approve",
+      "userRole": "Citizen",
+      "dependsOn": "Create Case - Citizen",
+      "expectedStatus": 403
+    },
+    {
+      "name": "Access Denied - Citizen Update",
+      "description": "Verify citizen cannot update cases",
+      "method": "PATCH",
+      "endpoint": "/cases/{caseId}",
+      "userRole": "Citizen",
+      "dependsOn": "Create Case - Citizen",
+      "payload": {
+        "title": "Unauthorized Update Attempt"
+      },
+      "expectedStatus": 403
+    }
+  ]
+}

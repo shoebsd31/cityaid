@@ -107,15 +107,16 @@ The API uses JWT Bearer tokens with the following claims structure:
 }
 ```
 
-### Generating Test Tokens
-Run the JWT token generator to create valid bearer tokens:
+### Testing with Azure Authentication
+The API now uses Azure Entra ID for authentication. Configure test credentials:
 
 ```bash
-cd tools/JwtTokenGenerator
-dotnet run
+cd tools/ApiTestRunner
+cp appsers.json.example appsers.json
+# Edit appsers.json with your Azure AD configuration
 ```
 
-This will generate tokens for different user roles with proper claims and scopes.
+See `AZURE_AUTH_SETUP.md` for detailed Azure AD configuration instructions.
 
 ### Using Tokens in Swagger
 1. **Start the API**: `dotnet run --project src/CityAid.Api`

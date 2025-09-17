@@ -1,0 +1,27 @@
+{
+  "tenantId": "44867f9c-8eca-4bf3-aeae-0ddd7c46cc0a",
+  "clientId": "156d89cf-3aa9-44d4-8cac-fbe5c00fac00",
+  "users": [
+    {
+      "username": "admin@yourcompany.onmicrosoft.com",
+      "password": "your-password-here",
+      "role": "Admin",
+      "description": "Full administrative access"
+    },
+    {
+      "username": "casemanager@yourcompany.onmicrosoft.com",
+      "password": "your-password-here",
+      "role": "CaseManager",
+      "description": "Case management access"
+    },
+    {
+      "username": "citizen@yourcompany.onmicrosoft.com",
+      "password": "your-password-here",
+      "role": "Citizen",
+      "description": "Basic citizen access"
+    }
+  ],
+  "scopes": [
+    "api://156d89cf-3aa9-44d4-8cac-fbe5c00fac00/access_as_user"
+  ]
+}

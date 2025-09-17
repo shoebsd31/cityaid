@@ -30,6 +30,7 @@ public static class FileEndpoints
                 ? Results.Created($"/cases/{id}/files/{result.Value!.Id}", result.Value)
                 : Results.BadRequest(new { errors = result.Errors });
         })
+        .RequireAuthorization("CitizenPolicy")
         .WithName("AttachFile")
         .WithSummary("Attach a file (metadata link to SharePoint item)")
         .WithOpenApi();
@@ -42,6 +43,7 @@ public static class FileEndpoints
             // For now, return empty list - in real implementation, you'd create a GetFilesQuery
             return Results.Ok(new List<object>());
         })
+        .RequireAuthorization("CitizenPolicy")
         .WithName("GetFiles")
         .WithSummary("List files for case (scoped)")
         .WithOpenApi();

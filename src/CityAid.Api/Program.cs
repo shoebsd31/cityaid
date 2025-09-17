@@ -2,9 +2,7 @@ using CityAid.Application;
 using CityAid.Infrastructure;
 using CityAid.Api.Middleware;
 using CityAid.Api.Endpoints;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
+using Microsoft.Identity.Web;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,23 +11,30 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
-// Add authentication
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-    .AddJwtBearer(options =>
-    {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidateAudience = true,
-            ValidateLifetime = true,
-            ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? "DefaultKeyForDevelopmentOnly123456789"))
-        };
-    });
+// Add authentication and authorization with Entra ID
+builder.Services.AddAuthentication(Microsoft.AspNetCore.Authentication.OpenIdConnect.OpenIdConnectDefaults.AuthenticationScheme)
+    .AddMicrosoftIdentityWebApi(builder.Configuration.GetSection("AzureAd"));
 
-builder.Services.AddAuthorization();
+// Microsoft Graph can be added later when needed for role queries
+
+// Add authorization with Azure roles
+builder.Services.AddAuthorization(options =>
+{
+    // Require authenticated user for all endpoints by default
+    options.FallbackPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+
+    // Define role-based policies
+    options.AddPolicy("AdminPolicy", policy =>
+        policy.RequireRole("CityAid.Admin"));
+
+    options.AddPolicy("CaseManagerPolicy", policy =>
+        policy.RequireRole("CityAid.CaseManager", "CityAid.Admin"));
+
+    options.AddPolicy("CitizenPolicy", policy =>
+        policy.RequireRole("CityAid.Citizen", "CityAid.CaseManager", "CityAid.Admin"));
+});
 
 // Add HTTP context accessor for user service
 builder.Services.AddHttpContextAccessor();
@@ -48,14 +53,22 @@ builder.Services.AddSwaggerGen(c =>
         Description = "API for CityAid MCP Access & Approvals with RBAC enforcement"
     });
 
-    // Add JWT authentication to Swagger
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    // Add OAuth2 authentication to Swagger for Entra ID
+    c.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
     {
-        Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token.",
-        Name = "Authorization",
-        In = ParameterLocation.Header,
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer"
+        Type = SecuritySchemeType.OAuth2,
+        Flows = new OpenApiOAuthFlows
+        {
+            AuthorizationCode = new OpenApiOAuthFlow
+            {
+                AuthorizationUrl = new Uri($"https://login.microsoftonline.com/{builder.Configuration["AzureAd:TenantId"]}/oauth2/v2.0/authorize"),
+                TokenUrl = new Uri($"https://login.microsoftonline.com/{builder.Configuration["AzureAd:TenantId"]}/oauth2/v2.0/token"),
+                Scopes = new Dictionary<string, string>
+                {
+                    {$"api://{builder.Configuration["AzureAd:ClientId"]}/access_as_user", "Access the API as user"}
+                }
+            }
+        }
     });
 
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -66,10 +79,10 @@ builder.Services.AddSwaggerGen(c =>
                 Reference = new OpenApiReference
                 {
                     Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
+                    Id = "oauth2"
                 }
             },
-            Array.Empty<string>()
+            new[] { $"api://{builder.Configuration["AzureAd:ClientId"]}/access_as_user" }
         }
     });
 });

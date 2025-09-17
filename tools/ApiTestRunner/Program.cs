@@ -2,8 +2,40 @@ using System.CommandLine;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.Identity.Client;
+using System.Security;
 
 namespace ApiTestRunner;
+
+public class UserCredentials
+{
+    [JsonPropertyName("username")]
+    public string Username { get; set; } = string.Empty;
+
+    [JsonPropertyName("password")]
+    public string Password { get; set; } = string.Empty;
+
+    [JsonPropertyName("role")]
+    public string Role { get; set; } = string.Empty;
+
+    [JsonPropertyName("description")]
+    public string Description { get; set; } = string.Empty;
+}
+
+public class AuthConfiguration
+{
+    [JsonPropertyName("tenantId")]
+    public string TenantId { get; set; } = string.Empty;
+
+    [JsonPropertyName("clientId")]
+    public string ClientId { get; set; } = string.Empty;
+
+    [JsonPropertyName("users")]
+    public List<UserCredentials> Users { get; set; } = new();
+
+    [JsonPropertyName("scopes")]
+    public List<string> Scopes { get; set; } = new();
+}
 
 public class TestRequest
 {
@@ -19,8 +51,8 @@ public class TestRequest
     [JsonPropertyName("endpoint")]
     public string Endpoint { get; set; } = string.Empty;
 
-    [JsonPropertyName("token")]
-    public string Token { get; set; } = string.Empty;
+    [JsonPropertyName("userRole")]
+    public string UserRole { get; set; } = string.Empty;
 
     [JsonPropertyName("payload")]
     public JsonElement? Payload { get; set; }
@@ -36,9 +68,6 @@ public class TestConfiguration
 {
     [JsonPropertyName("apiBaseUrl")]
     public string ApiBaseUrl { get; set; } = string.Empty;
-
-    [JsonPropertyName("tokens")]
-    public Dictionary<string, string> Tokens { get; set; } = new();
 
     [JsonPropertyName("requests")]
     public List<TestRequest> Requests { get; set; } = new();
@@ -59,6 +88,7 @@ class Program
 {
     private static readonly HttpClient httpClient = new();
     private static readonly Dictionary<string, string> createdCaseIds = new();
+    private static readonly Dictionary<string, string> accessTokens = new();
     private static readonly JsonSerializerOptions jsonOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
@@ -88,23 +118,31 @@ class Program
             name: "--output",
             description: "Output file for test results (JSON format)");
 
+        var credentialsOption = new Option<FileInfo>(
+            name: "--credentials",
+            description: "JSON file containing user credentials")
+        {
+            IsRequired = true
+        };
+
         var rootCommand = new RootCommand("CityAid API Test Runner")
         {
             fileOption,
+            credentialsOption,
             delayOption,
             verboseOption,
             outputOption
         };
 
-        rootCommand.SetHandler(async (file, delay, verbose, output) =>
+        rootCommand.SetHandler(async (file, credentials, delay, verbose, output) =>
         {
-            await RunTests(file, delay, verbose, output);
-        }, fileOption, delayOption, verboseOption, outputOption);
+            await RunTests(file, credentials, delay, verbose, output);
+        }, fileOption, credentialsOption, delayOption, verboseOption, outputOption);
 
         return await rootCommand.InvokeAsync(args);
     }
 
-    static async Task RunTests(FileInfo configFile, int delay, bool verbose, FileInfo? outputFile)
+    static async Task RunTests(FileInfo configFile, FileInfo credentialsFile, int delay, bool verbose, FileInfo? outputFile)
     {
         try
         {
@@ -118,11 +156,28 @@ class Program
                 return;
             }
 
+            // Load credentials
+            var credentialsJson = await File.ReadAllTextAsync(credentialsFile.FullName);
+            var authConfig = JsonSerializer.Deserialize<AuthConfiguration>(credentialsJson, jsonOptions);
+
+            if (authConfig == null)
+            {
+                Console.WriteLine("❌ Failed to parse credentials file");
+                return;
+            }
+
             Console.WriteLine($"🚀 CityAid API Test Runner");
             Console.WriteLine($"📄 Config: {configFile.Name}");
+            Console.WriteLine($"🔐 Credentials: {credentialsFile.Name}");
             Console.WriteLine($"🎯 Target: {config.ApiBaseUrl}");
             Console.WriteLine($"🧪 Tests: {config.Requests.Count}");
+            Console.WriteLine($"👥 Users: {authConfig.Users.Count}");
             Console.WriteLine($"⏱️  Delay: {delay}ms between requests");
+            Console.WriteLine();
+
+            // Authenticate users and get access tokens
+            Console.WriteLine("🔐 Authenticating users...");
+            await AuthenticateUsers(authConfig, verbose);
             Console.WriteLine();
 
             // Configure HTTP client
@@ -227,6 +282,50 @@ class Program
         }
     }
 
+    static async Task AuthenticateUsers(AuthConfiguration authConfig, bool verbose)
+    {
+        foreach (var user in authConfig.Users)
+        {
+            try
+            {
+                Console.WriteLine($"  👤 {user.Role}: {user.Username}");
+
+                var app = PublicClientApplicationBuilder
+                    .Create(authConfig.ClientId)
+                    .WithAuthority($"https://login.microsoftonline.com/{authConfig.TenantId}")
+                    .WithRedirectUri("http://localhost")
+                    .Build();
+
+                var securePassword = new SecureString();
+                foreach (char c in user.Password)
+                    securePassword.AppendChar(c);
+                securePassword.MakeReadOnly();
+
+                var result = await app.AcquireTokenByUsernamePassword(
+                    authConfig.Scopes,
+                    user.Username,
+                    securePassword)
+                    .ExecuteAsync();
+
+                accessTokens[user.Role] = result.AccessToken;
+                Console.WriteLine($"    ✅ Authentication successful");
+
+                if (verbose)
+                {
+                    Console.WriteLine($"    🎫 Token expires: {result.ExpiresOn:yyyy-MM-dd HH:mm:ss}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"    ❌ Authentication failed: {ex.Message}");
+                if (verbose)
+                {
+                    Console.WriteLine($"    📄 Details: {ex}");
+                }
+            }
+        }
+    }
+
     static async Task<TestResult> ExecuteRequest(TestConfiguration config, TestRequest request, bool verbose)
     {
         var result = new TestResult { Name = request.Name };
@@ -234,10 +333,10 @@ class Program
 
         try
         {
-            // Get token
-            if (!config.Tokens.TryGetValue(request.Token, out var token))
+            // Get access token for user role
+            if (!accessTokens.TryGetValue(request.UserRole, out var token))
             {
-                result.Error = $"Token '{request.Token}' not found in configuration";
+                result.Error = $"No access token available for role '{request.UserRole}'";
                 return result;
             }
 
